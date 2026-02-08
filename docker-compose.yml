@@ -1,0 +1,46 @@
+version: '3.9'
+
+networks:
+  moodle_network:
+    driver: bridge
+
+services:
+  db:
+    image: mariadb:10.6
+    container_name: moodle_db
+    restart: unless-stopped
+    networks:
+      - moodle_network
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWD}
+    volumes:
+      - moodle_db_data:/var/lib/mysql
+
+  moodle:
+    image: moodlehq/moodle-php-apache:8.3-bullseye
+    container_name: moodle_app
+    restart: unless-stopped
+    networks:
+      - moodle_network
+    environment:
+      MOODLE_DBTYPE: mariadb
+      MOODLE_DBHOST: db
+      MOODLE_DBNAME: ${DB_NAME}
+      MOODLE_DBUSER: ${DB_USER}
+      MOODLE_DBPASS: ${DB_PASSWD}
+      MOODLE_WWWROOT: ${ROOT_URL}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASSWD}
+    volumes:
+      - ./moodle_app:/var/www/html
+      - ./moodledata:/var/www/moodledata
+    ports:
+      - "6190:80"
+
+volumes:
+  moodle_db_data:
